@@ -1,9 +1,6 @@
 basic256 Cookbook
 =================
-TODO: Enter the cookbook description here.
-
-e.g.
-This cookbook makes your favorite breakfast sandwich.
+Installation of Basic256 application on Cent OS 6.5
 
 Requirements
 ------------
