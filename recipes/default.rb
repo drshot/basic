@@ -21,25 +21,30 @@ execute "qt5" do
 end
 
 node.basic256.package.each do |packages|
-	package "#{packages}" do
+	package packages do
 		action :install
 	end
 end 
 
-remote_file "/opt/#{node.basic256.remote_version}" do
+path = Chef::Config[:file_cache_path]
+
+remote_file "/#{path}/#{node.basic256.remote_version}" do
 	source "http://sourceforge.net/projects/kidbasic/files/basic256/#{node.basic256.remote_version}"
+	action :create_if_missing
 end
 
 bash 'configure_basic256' do
   user 'root'
-  cwd '/opt/'
+  cwd '/tmp/'
   code <<-EOH
-  tar xvzf #{node.basic256.remote_version}
+  tar xvzf #{node.basic256.remote_version} -C /opt/
   EOH
+  not_if do ::Dir.exists?("/opt/#{node.basic256.local_version}/") end
 end 
 
 remote_file "/opt/#{node.basic256.local_version}/speak_lib.h" do
 	source "http://espeak.sourceforge.net/speak_lib.h"
+	action :create_if_missing
 end
 
 template "/opt/#{node.basic256.local_version}/Makefile" do
@@ -52,10 +57,13 @@ template "/opt/#{node.basic256.local_version}/BasicMediaPlayer.cpp" do
 	action :create
 end
 
-bash 'install_basic256' do
+execute 'make_tmp' do
 	cwd "/opt/#{node.basic256.local_version}"
-	code <<-EOH
-	make
-	make install
-	EOH
+	command "make"
+	not_if do ::Dir.exists?("/opt/#{node.basic256.local_version}/tmp") end
+end
+
+execute "make_basic256" do
+	command "make install"
+	not_if do ::File.exists?("/opt/#{node.basic256.local_version}/basic256") end
 end
